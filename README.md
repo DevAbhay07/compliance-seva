@@ -1,6 +1,7 @@
 # Legal Metrology Scanner
 
-🌐 **Live Demo**: [https://legal-metrology-scanner.netlify.app](https://legal-metrology-scanner.netlify.app)
+🌐 **Live Demo**: [https://compliance-seva.netlify.app](https://compliance-seva.netlify.app)
+📱 **GitHub Repository**: [https://github.com/DevAbhay07/compliance-seva](https://github.com/DevAbhay07/compliance-seva)
 
 ## Project Overview
 Legal Metrology Scanner is a modern, responsive web application designed to streamline compliance checks for product labels under legal metrology standards. Built with React 18 and TypeScript, featuring comprehensive mobile compatibility and real-time camera functionality.
