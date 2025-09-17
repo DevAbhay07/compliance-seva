@@ -1,0 +1,95 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;600;700;800;900&family=Noto+Sans+Mono:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-gray-200;
+  }
+  
+  body {
+    @apply bg-white text-gray-900 font-noto-sans;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold;
+  }
+
+  /* Government accessibility standards */
+  .gov-focus:focus {
+    @apply outline-2 outline-offset-2 outline-gov-blue;
+  }
+}
+
+@layer components {
+  /* Government button styles */
+  .btn-primary {
+    @apply bg-gov-blue hover:bg-gov-blue-light text-white font-medium px-4 py-2 rounded-md transition-colors duration-200 gov-focus touch-manipulation;
+    min-height: 44px; /* Government accessibility standard */
+  }
+
+  .btn-secondary {
+    @apply bg-transparent border border-gov-blue text-gov-blue hover:bg-gov-blue hover:text-white font-medium px-4 py-2 rounded-md transition-all duration-200 gov-focus touch-manipulation;
+    min-height: 44px; /* Government accessibility standard */
+  }
+
+  .btn-outline {
+    @apply bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 font-medium px-4 py-2 rounded-md transition-all duration-200 gov-focus touch-manipulation;
+    min-height: 44px; /* Government accessibility standard */
+  }
+
+  /* Status indicators */
+  .status-success {
+    @apply text-success bg-success/10 border-success/20;
+  }
+
+  .status-warning {
+    @apply text-warning bg-warning/10 border-warning/20;
+  }
+
+  .status-error {
+    @apply text-error bg-error/10 border-error/20;
+  }
+
+  /* Card styles */
+  .gov-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 transition-shadow duration-200 hover:shadow-md;
+  }
+
+  /* Input styles */
+  .gov-input {
+    @apply w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gov-blue focus:border-transparent transition-all duration-200 text-base;
+    min-height: 44px; /* Government accessibility standard */
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Custom animations */
+  .animate-smooth-bounce {
+    animation: smoothBounce 2s ease-in-out infinite;
+  }
+
+  @keyframes smoothBounce {
+    0%, 20%, 53%, 80%, 100% {
+      animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+      transform: translate3d(0, 0, 0);
+    }
+    40%, 43% {
+      animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+      transform: translate3d(0, -8px, 0);
+    }
+    70% {
+      animation-timing-function: cubic-bezier(0.755, 0.05, 0.855, 0.06);
+      transform: translate3d(0, -4px, 0);
+    }
+    90% {
+      transform: translate3d(0, -2px, 0);
+    }
+  }
+}
