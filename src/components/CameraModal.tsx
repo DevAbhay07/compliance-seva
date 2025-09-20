@@ -49,9 +49,9 @@ const CameraModal: React.FC<CameraModalProps> = ({
     <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[95vh] overflow-hidden">
         {/* Modern Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-pink-50">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-100 bg-gradient-to-r from-gov-blue/10 to-gov-blue-light/10">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+            <div className="w-10 h-10 bg-gradient-to-r from-gov-blue to-gov-blue-light rounded-xl flex items-center justify-center shadow-lg">
               <CameraIcon className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -80,7 +80,7 @@ const CameraModal: React.FC<CameraModalProps> = ({
                 {onRetry && (
                   <button
                     onClick={onRetry}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2 touch-manipulation"
+                    className="bg-gov-blue hover:bg-gov-blue-light text-white px-6 py-3 rounded-xl font-medium transition-all duration-200 hover:scale-105 flex items-center justify-center space-x-2 touch-manipulation"
                   >
                     <RefreshCw className="w-4 h-4" />
                     <span>Try Again</span>
@@ -131,28 +131,21 @@ const CameraModal: React.FC<CameraModalProps> = ({
                         {/* Main scanning frame */}
                         <div className="relative w-full h-full border-2 border-white/60 rounded-2xl">
                           {/* Corner accents */}
-                          <div className="absolute -top-1 -left-1 w-8 h-8 border-l-4 border-t-4 border-purple-400 rounded-tl-xl"></div>
-                          <div className="absolute -top-1 -right-1 w-8 h-8 border-r-4 border-t-4 border-purple-400 rounded-tr-xl"></div>
-                          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-l-4 border-b-4 border-purple-400 rounded-bl-xl"></div>
-                          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-r-4 border-b-4 border-purple-400 rounded-br-xl"></div>
+                          <div className="absolute -top-1 -left-1 w-8 h-8 border-l-4 border-t-4 border-gov-blue rounded-tl-xl"></div>
+                          <div className="absolute -top-1 -right-1 w-8 h-8 border-r-4 border-t-4 border-gov-blue rounded-tr-xl"></div>
+                          <div className="absolute -bottom-1 -left-1 w-8 h-8 border-l-4 border-b-4 border-gov-blue rounded-bl-xl"></div>
+                          <div className="absolute -bottom-1 -right-1 w-8 h-8 border-r-4 border-b-4 border-gov-blue rounded-br-xl"></div>
                           
                           {/* Center crosshair */}
                           <div className="absolute top-1/2 left-1/2 w-6 h-6 transform -translate-x-1/2 -translate-y-1/2">
-                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-purple-400 transform -translate-y-1/2"></div>
-                            <div className="absolute left-1/2 top-0 h-full w-0.5 bg-purple-400 transform -translate-x-1/2"></div>
+                            <div className="absolute top-1/2 left-0 w-full h-0.5 bg-gov-blue transform -translate-y-1/2"></div>
+                            <div className="absolute left-1/2 top-0 h-full w-0.5 bg-gov-blue transform -translate-x-1/2"></div>
                           </div>
                           
                           {/* Scanning line animation */}
                           <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-purple-400 to-transparent animate-pulse"></div>
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gov-blue-light to-transparent animate-pulse"></div>
                           </div>
-                        </div>
-                      </div>
-                      
-                      {/* Instructions overlay */}
-                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
-                        <div className="bg-black/70 backdrop-blur-sm text-white px-4 py-2 rounded-xl text-sm font-medium">
-                          📷 Position product label within the frame
                         </div>
                       </div>
                     </div>
@@ -165,7 +158,7 @@ const CameraModal: React.FC<CameraModalProps> = ({
                 <button
                   onClick={onCapture}
                   disabled={isLoading}
-                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 rounded-2xl font-semibold flex items-center space-x-3 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl w-full sm:w-auto touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group"
+                  className="bg-gradient-to-r from-gov-blue to-gov-blue-light hover:from-gov-blue-light hover:to-gov-blue text-white px-8 py-4 rounded-2xl font-semibold flex items-center space-x-3 transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl w-full sm:w-auto touch-manipulation disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 group"
                 >
                   <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center group-hover:bg-white/30 transition-colors">
                     <ScanLine className="w-4 h-4" />
@@ -181,7 +174,7 @@ const CameraModal: React.FC<CameraModalProps> = ({
                     disabled={isLoading}
                     className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-4 rounded-2xl font-semibold transition-all duration-200 hover:scale-105 active:scale-95 shadow-lg w-full sm:w-auto touch-manipulation text-base disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                   >
-                    📥 Download Photo
+                    Download Photo
                   </button>
                 )}
                 
