@@ -16,6 +16,7 @@ import { startScan, completeScan } from '../lib/slices/complianceSlice'
 import { generateId } from '../lib/utils'
 import { useCamera } from '../hooks/useCamera'
 import CameraModal from '../components/CameraModal'
+import CameraDebug from '../components/CameraDebug'
 
 const Scanner: React.FC = () => {
   const dispatch = useDispatch()
@@ -84,14 +85,24 @@ const Scanner: React.FC = () => {
   ]
 
   const handleScan = async (method: typeof activeMethod) => {
+    console.log('📷 handleScan called with method:', method)
+    
     if (method === 'camera') {
       // Start camera for camera method
-      await camera.startCamera()
-      setActiveMethod(method)
-      return
+      console.log('📷 Starting camera from Scanner page')
+      try {
+        await camera.startCamera()
+        console.log('📷 ✅ Camera started successfully from Scanner')
+        setActiveMethod(method)
+        return
+      } catch (error) {
+        console.error('📷 ❌ Camera failed to start from Scanner:', error)
+        return
+      }
     }
     
     // For other methods, proceed with scanning
+    console.log('📷 Starting scan process for method:', method)
     setIsScanning(true)
     dispatch(startScan())
 
@@ -117,6 +128,22 @@ const Scanner: React.FC = () => {
     setScanResult(mockResult)
     dispatch(completeScan(mockResult))
     setIsScanning(false)
+  }
+
+  const handleCameraDebug = async () => {
+    console.log('📷 Scanner Debug: Starting camera')
+    try {
+      await camera.startCamera()
+      setActiveMethod('camera')
+    } catch (error) {
+      console.error('📷 Scanner Debug: Camera failed:', error)
+    }
+  }
+
+  const handleCheckCameraSupport = async () => {
+    const isSupported = await camera.checkCameraSupport()
+    console.log('📷 Scanner Camera support check:', isSupported)
+    alert(`Camera support: ${isSupported ? 'Supported ✅' : 'Not supported ❌'}`)
   }
 
   const handleCameraCapture = async () => {
@@ -411,6 +438,12 @@ const Scanner: React.FC = () => {
         onRetry={camera.retryCamera}
         title="Product Label Scanner"
         description="Position the product label clearly in the frame and capture"
+      />
+
+      {/* Debug Component (remove in production) */}
+      <CameraDebug
+        onStartCamera={handleCameraDebug}
+        onCheckSupport={handleCheckCameraSupport}
       />
     </div>
   )

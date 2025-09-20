@@ -36,124 +36,212 @@ export const useCamera = (options: CameraOptions = {}) => {
     try {
       setError(null)
       setIsLoading(true)
-      console.log('🎥 Starting camera initialization...')
+      console.log('🎥 Starting camera initialization...', {
+        hasNavigator: !!navigator,
+        hasMediaDevices: !!navigator?.mediaDevices,
+        hasGetUserMedia: !!navigator?.mediaDevices?.getUserMedia,
+        userAgent: navigator?.userAgent
+      })
       
-      // Check if camera is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported on this browser. Please use Chrome, Firefox, or Safari.')
+      // Enhanced browser compatibility check
+      if (!navigator) {
+        throw new Error('Navigator not available - browser may be too old')
+      }
+      
+      if (!navigator.mediaDevices) {
+        throw new Error('MediaDevices not supported - please use HTTPS or a modern browser')
+      }
+      
+      if (!navigator.mediaDevices.getUserMedia) {
+        throw new Error('getUserMedia not supported - browser may be too old')
+      }
+
+      console.log('🎥 Browser compatibility check passed')
+      
+      // Check for available devices first
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices()
+        const videoDevices = devices.filter(device => device.kind === 'videoinput')
+        console.log('🎥 Available video devices:', videoDevices.length, videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label || 'Unknown' })))
+        
+        if (videoDevices.length === 0) {
+          throw new Error('No camera devices found on this device')
+        }
+      } catch (deviceError) {
+        console.warn('🎥 ⚠️ Could not enumerate devices (may still work):', deviceError)
       }
 
       console.log('🎥 Requesting camera permissions...')
       
       let mediaStream: MediaStream
 
-      // Try progressive constraints for better compatibility
+      // Progressive constraints for better compatibility
       const constraintOptions = [
         // Best quality with rear camera preference
         {
           video: {
-            width: { ideal: width, min: 320 },
-            height: { ideal: height, min: 240 },
+            width: { ideal: width, min: 320, max: 1920 },
+            height: { ideal: height, min: 240, max: 1080 },
             facingMode: { ideal: facingMode },
-            frameRate: { ideal: 30, min: 15 }
+            frameRate: { ideal: 30, min: 10, max: 60 }
           }
         },
-        // Fallback without facingMode
+        // Fallback without facingMode (for devices without rear camera)
+        {
+          video: {
+            width: { ideal: 1280, min: 320, max: 1920 },
+            height: { ideal: 720, min: 240, max: 1080 },
+            frameRate: { ideal: 30, min: 10, max: 60 }
+          }
+        },
+        // Basic HD constraints
         {
           video: {
             width: { ideal: 1280, min: 320 },
-            height: { ideal: 720, min: 240 },
-            frameRate: { ideal: 30, min: 15 }
+            height: { ideal: 720, min: 240 }
           }
         },
-        // Basic constraints
+        // Standard resolution
         {
           video: {
             width: { ideal: 640, min: 320 },
             height: { ideal: 480, min: 240 }
           }
         },
-        // Minimal constraints
+        // Minimal constraints (last resort)
         { video: true }
       ]
 
       let lastError: any = null
+      let attemptSuccess = false
 
       for (let i = 0; i < constraintOptions.length; i++) {
         try {
-          console.log(`🎥 Attempt ${i + 1}/${constraintOptions.length}:`, constraintOptions[i])
-          mediaStream = await navigator.mediaDevices.getUserMedia(constraintOptions[i])
+          console.log(`🎥 Attempt ${i + 1}/${constraintOptions.length}:`, JSON.stringify(constraintOptions[i], null, 2))
+          
+          // Add timeout to prevent hanging
+          const streamPromise = navigator.mediaDevices.getUserMedia(constraintOptions[i])
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Camera request timeout - please try again')), 10000)
+          )
+          
+          mediaStream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream
           console.log('🎥 ✅ Camera started successfully with constraints:', constraintOptions[i])
+          attemptSuccess = true
           break
-        } catch (attemptError) {
-          console.warn(`🎥 ⚠️ Attempt ${i + 1} failed:`, attemptError)
+        } catch (attemptError: any) {
+          console.warn(`🎥 ⚠️ Attempt ${i + 1} failed:`, {
+            name: attemptError.name,
+            message: attemptError.message,
+            constraint: constraintOptions[i]
+          })
           lastError = attemptError
-          if (i === constraintOptions.length - 1) {
-            throw attemptError
+          
+          // Don't continue if it's a permission error
+          if (attemptError.name === 'NotAllowedError' || attemptError.name === 'PermissionDeniedError') {
+            console.error('🎥 ❌ Permission denied, stopping attempts')
+            break
           }
         }
       }
       
-      if (!mediaStream!) {
-        throw lastError || new Error('Failed to get media stream')
+      if (!attemptSuccess || !mediaStream!) {
+        throw lastError || new Error('All camera initialization attempts failed')
       }
 
-      console.log('🎥 MediaStream obtained:', mediaStream)
-      console.log('🎥 Video tracks:', mediaStream.getVideoTracks().map(t => ({ 
-        label: t.label, 
-        enabled: t.enabled, 
-        readyState: t.readyState 
-      })))
+      console.log('🎥 MediaStream obtained:', {
+        id: mediaStream.id,
+        active: mediaStream.active,
+        tracks: mediaStream.getVideoTracks().map(t => ({ 
+          label: t.label || 'Unknown Camera', 
+          enabled: t.enabled, 
+          readyState: t.readyState,
+          constraints: t.getConstraints()
+        }))
+      })
       
       setStream(mediaStream)
       setIsOpen(true)
       
-      // Enhanced video setup
+      // Enhanced video setup with better error handling
       if (videoRef.current) {
         const video = videoRef.current
         console.log('🎥 Setting up video element...')
         
-        // Set stream
+        // Clear any previous source
+        video.srcObject = null
+        
+        // Set new stream
         video.srcObject = mediaStream
+        video.muted = true // Prevent audio feedback
+        video.playsInline = true // Important for mobile
+        video.autoplay = true
         
-        // Wait for metadata to load
-        await new Promise<void>((resolve, reject) => {
-          const timeout = setTimeout(() => {
-            console.warn('🎥 ⚠️ Video metadata load timeout')
-            resolve() // Don't reject, continue anyway
-          }, 5000)
-          
-          const onLoadedMetadata = () => {
-            clearTimeout(timeout)
-            console.log('🎥 ✅ Video metadata loaded:', {
-              videoWidth: video.videoWidth,
-              videoHeight: video.videoHeight,
-              duration: video.duration
-            })
-            resolve()
-          }
-          
-          const onError = (e: any) => {
-            clearTimeout(timeout)
-            console.error('🎥 ❌ Video metadata error:', e)
-            resolve() // Don't reject, continue anyway
-          }
-          
-          video.addEventListener('loadedmetadata', onLoadedMetadata, { once: true })
-          video.addEventListener('error', onError, { once: true })
-        })
+        // Enhanced video loading with multiple event handlers
+        const setupVideoPlayback = () => {
+          return new Promise<void>((resolve, reject) => {
+            const cleanup = () => {
+              video.removeEventListener('loadedmetadata', onLoadedMetadata)
+              video.removeEventListener('canplay', onCanPlay)
+              video.removeEventListener('playing', onPlaying)
+              video.removeEventListener('error', onError)
+              clearTimeout(timeout)
+            }
+            
+            const timeout = setTimeout(() => {
+              console.warn('🎥 ⚠️ Video setup timeout - continuing anyway')
+              cleanup()
+              resolve()
+            }, 8000)
+            
+            const onLoadedMetadata = () => {
+              console.log('🎥 ✅ Video metadata loaded:', {
+                videoWidth: video.videoWidth,
+                videoHeight: video.videoHeight,
+                duration: video.duration
+              })
+            }
+            
+            const onCanPlay = () => {
+              console.log('🎥 ✅ Video can play')
+            }
+            
+            const onPlaying = () => {
+              console.log('🎥 ✅ Video is playing')
+              cleanup()
+              resolve()
+            }
+            
+            const onError = (e: Event) => {
+              console.error('🎥 ❌ Video error:', e)
+              cleanup()
+              reject(new Error('Video playback failed'))
+            }
+            
+            video.addEventListener('loadedmetadata', onLoadedMetadata)
+            video.addEventListener('canplay', onCanPlay)
+            video.addEventListener('playing', onPlaying)
+            video.addEventListener('error', onError)
+          })
+        }
         
-        // Start playback
+        // Start video playback
         try {
           await video.play()
-          console.log('🎥 ✅ Video playing successfully')
+          console.log('🎥 Video play() called successfully')
           
-          // Small delay to ensure video is actually displaying
+          // Wait for actual playback
+          await setupVideoPlayback()
+          console.log('🎥 ✅ Video fully loaded and playing')
+          
+          // Final delay to ensure video is displaying
           setTimeout(() => {
+            console.log('🎥 ✅ Camera setup complete, removing loading state')
             setIsLoading(false)
-          }, 500)
+          }, 1000)
         } catch (playError) {
-          console.warn('🎥 ⚠️ Video play failed:', playError)
+          console.error('🎥 ❌ Video play failed:', playError)
+          // Still remove loading state
           setIsLoading(false)
         }
       } else {
@@ -162,21 +250,27 @@ export const useCamera = (options: CameraOptions = {}) => {
       }
       
       console.log('🎥 ✅ Camera initialization complete')
-    } catch (err) {
-      console.error('🎥 ❌ Camera error:', err)
+    } catch (err: any) {
+      console.error('🎥 ❌ Camera initialization failed:', {
+        name: err?.name,
+        message: err?.message,
+        stack: err?.stack
+      })
       setIsLoading(false)
       
       let errorMessage = 'Camera access failed. '
       
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          errorMessage = '🚫 Camera permission denied.\n\nPlease:\n• Allow camera access in your browser\n• Check camera permissions in browser settings\n• Ensure no other app is using the camera'
+          errorMessage = '🚫 Camera permission denied.\n\nPlease:\n• Click "Allow" when prompted for camera access\n• Check browser settings to enable camera\n• Ensure no other app is using the camera\n• Try refreshing the page'
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-          errorMessage = '📷 No camera found.\n\nPlease:\n• Connect a camera to your device\n• Check if camera drivers are installed\n• Try refreshing the page'
+          errorMessage = '📷 No camera found.\n\nPlease:\n• Connect a camera to your device\n• Check if camera drivers are installed\n• Ensure camera is not disabled in system settings\n• Try refreshing the page'
         } else if (err.name === 'NotSupportedError') {
-          errorMessage = '🌐 Camera not supported.\n\nPlease:\n• Use Chrome, Firefox, or Safari\n• Ensure you\'re on HTTPS (required for camera)\n• Try a different browser'
+          errorMessage = '🌐 Camera not supported.\n\nPlease:\n• Use Chrome, Firefox, or Safari\n• Ensure you\'re on HTTPS (camera requires secure connection)\n• Update your browser to the latest version'
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          errorMessage = '⚠️ Camera is busy.\n\nPlease:\n• Close other apps using the camera\n• Restart your browser\n• Check if camera is being used elsewhere'
+          errorMessage = '⚠️ Camera is busy.\n\nPlease:\n• Close other apps or browser tabs using the camera\n• Restart your browser\n• Check if video conferencing apps are running'
+        } else if (err.message.includes('timeout')) {
+          errorMessage = '⏱️ Camera request timed out.\n\nPlease:\n• Check your camera connection\n• Try again in a few seconds\n• Restart your browser if the issue persists'
         } else {
           errorMessage = `❌ ${err.message}\n\nPlease:\n• Refresh the page and try again\n• Check your camera settings\n• Ensure camera permissions are allowed`
         }
