@@ -163,9 +163,27 @@ export const useCamera = (options: CameraOptions = {}) => {
       setStream(mediaStream)
       setIsOpen(true)
       
+      // Wait for video element to be available with retries
+      let videoElement = videoRef.current
+      let retries = 0
+      const maxRetries = 10
+      
+      while (!videoElement && retries < maxRetries) {
+        console.log(`🎥 Waiting for video element... attempt ${retries + 1}/${maxRetries}`)
+        await new Promise(resolve => setTimeout(resolve, 100))
+        videoElement = videoRef.current
+        retries++
+      }
+      
+      if (!videoElement) {
+        console.warn('🎥 ⚠️ Video element not available after retries, but continuing...')
+        setIsLoading(false)
+        return
+      }
+      
       // Enhanced video setup with better error handling
-      if (videoRef.current) {
-        const video = videoRef.current
+      if (videoElement) {
+        const video = videoElement
         console.log('🎥 Setting up video element...')
         
         // Clear any previous source
@@ -245,7 +263,7 @@ export const useCamera = (options: CameraOptions = {}) => {
           setIsLoading(false)
         }
       } else {
-        console.warn('🎥 ⚠️ No video ref available')
+        console.warn('🎥 ⚠️ No video element available after retries')
         setIsLoading(false)
       }
       
