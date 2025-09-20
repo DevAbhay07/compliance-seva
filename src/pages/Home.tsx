@@ -361,7 +361,7 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Camera Modal */}
+      {/* Enhanced Camera Modal */}
       <CameraModal
         isOpen={camera.isOpen}
         videoRef={camera.videoRef}
@@ -370,6 +370,7 @@ const Home: React.FC = () => {
         onCapture={handleCameraCapture}
         onClose={() => camera.stopCamera()}
         onDownload={camera.downloadPhoto}
+        onRetry={camera.retryCamera}
         title="Product Label Scanner"
         description="Position the product label clearly in the frame and capture"
       />

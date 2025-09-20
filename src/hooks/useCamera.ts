@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 interface CameraOptions {
   width?: number
@@ -32,7 +32,7 @@ export const useCamera = (options: CameraOptions = {}) => {
     }
   }
 
-  const startCamera = async () => {
+  const startCamera = useCallback(async () => {
     try {
       setError(null)
       setIsLoading(true)
@@ -40,59 +40,121 @@ export const useCamera = (options: CameraOptions = {}) => {
       
       // Check if camera is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera not supported on this browser')
+        throw new Error('Camera not supported on this browser. Please use Chrome, Firefox, or Safari.')
       }
 
       console.log('🎥 Requesting camera permissions...')
       
-      // Simplified approach: try the most basic constraints first
       let mediaStream: MediaStream
-      
-      try {
-        // Try basic constraints first (most compatible)
-        console.log('🎥 Attempting with basic constraints')
-        mediaStream = await navigator.mediaDevices.getUserMedia({
+
+      // Try progressive constraints for better compatibility
+      const constraintOptions = [
+        // Best quality with rear camera preference
+        {
+          video: {
+            width: { ideal: width, min: 320 },
+            height: { ideal: height, min: 240 },
+            facingMode: { ideal: facingMode },
+            frameRate: { ideal: 30, min: 15 }
+          }
+        },
+        // Fallback without facingMode
+        {
           video: {
             width: { ideal: 1280, min: 320 },
-            height: { ideal: 720, min: 240 }
+            height: { ideal: 720, min: 240 },
+            frameRate: { ideal: 30, min: 15 }
           }
-        })
-        console.log('🎥 ✅ Camera started with basic constraints')
-      } catch (basicError) {
-        console.warn('🎥 ⚠️ Basic constraints failed:', basicError)
-        
+        },
+        // Basic constraints
+        {
+          video: {
+            width: { ideal: 640, min: 320 },
+            height: { ideal: 480, min: 240 }
+          }
+        },
+        // Minimal constraints
+        { video: true }
+      ]
+
+      let lastError: any = null
+
+      for (let i = 0; i < constraintOptions.length; i++) {
         try {
-          // Fallback to absolute minimal constraints
-          console.log('🎥 Attempting with minimal constraints')
-          mediaStream = await navigator.mediaDevices.getUserMedia({
-            video: true
-          })
-          console.log('🎥 ✅ Camera started with minimal constraints')
-        } catch (minimalError) {
-          console.error('🎥 ❌ All camera attempts failed:', minimalError)
-          throw minimalError
+          console.log(`🎥 Attempt ${i + 1}/${constraintOptions.length}:`, constraintOptions[i])
+          mediaStream = await navigator.mediaDevices.getUserMedia(constraintOptions[i])
+          console.log('🎥 ✅ Camera started successfully with constraints:', constraintOptions[i])
+          break
+        } catch (attemptError) {
+          console.warn(`🎥 ⚠️ Attempt ${i + 1} failed:`, attemptError)
+          lastError = attemptError
+          if (i === constraintOptions.length - 1) {
+            throw attemptError
+          }
         }
       }
       
+      if (!mediaStream!) {
+        throw lastError || new Error('Failed to get media stream')
+      }
+
       console.log('🎥 MediaStream obtained:', mediaStream)
-      console.log('🎥 Video tracks:', mediaStream.getVideoTracks())
+      console.log('🎥 Video tracks:', mediaStream.getVideoTracks().map(t => ({ 
+        label: t.label, 
+        enabled: t.enabled, 
+        readyState: t.readyState 
+      })))
       
       setStream(mediaStream)
       setIsOpen(true)
       
-      // Set video source immediately
+      // Enhanced video setup
       if (videoRef.current) {
-        console.log('🎥 Setting video source...')
-        videoRef.current.srcObject = mediaStream
+        const video = videoRef.current
+        console.log('🎥 Setting up video element...')
         
-        // Force video to play and set loading to false immediately
+        // Set stream
+        video.srcObject = mediaStream
+        
+        // Wait for metadata to load
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            console.warn('🎥 ⚠️ Video metadata load timeout')
+            resolve() // Don't reject, continue anyway
+          }, 5000)
+          
+          const onLoadedMetadata = () => {
+            clearTimeout(timeout)
+            console.log('🎥 ✅ Video metadata loaded:', {
+              videoWidth: video.videoWidth,
+              videoHeight: video.videoHeight,
+              duration: video.duration
+            })
+            resolve()
+          }
+          
+          const onError = (e: any) => {
+            clearTimeout(timeout)
+            console.error('🎥 ❌ Video metadata error:', e)
+            resolve() // Don't reject, continue anyway
+          }
+          
+          video.addEventListener('loadedmetadata', onLoadedMetadata, { once: true })
+          video.addEventListener('error', onError, { once: true })
+        })
+        
+        // Start playback
         try {
-          await videoRef.current.play()
+          await video.play()
           console.log('🎥 ✅ Video playing successfully')
-          setIsLoading(false)
+          
+          // Small delay to ensure video is actually displaying
+          setTimeout(() => {
+            setIsLoading(false)
+          }, 500)
         } catch (playError) {
-          console.warn('🎥 ⚠️ Video play failed, but continuing:', playError)
-          setIsLoading(false) // Set loading to false anyway
+          console.warn('🎥 ⚠️ Video play failed:', playError)
+          setIsLoading(false)
         }
       } else {
         console.warn('🎥 ⚠️ No video ref available')
@@ -104,33 +166,54 @@ export const useCamera = (options: CameraOptions = {}) => {
       console.error('🎥 ❌ Camera error:', err)
       setIsLoading(false)
       
-      let errorMessage = 'Unable to access camera. '
+      let errorMessage = 'Camera access failed. '
       
       if (err instanceof Error) {
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          errorMessage += 'Please allow camera permissions and try again.'
+          errorMessage = '🚫 Camera permission denied.\n\nPlease:\n• Allow camera access in your browser\n• Check camera permissions in browser settings\n• Ensure no other app is using the camera'
         } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-          errorMessage += 'No camera found on this device.'
+          errorMessage = '📷 No camera found.\n\nPlease:\n• Connect a camera to your device\n• Check if camera drivers are installed\n• Try refreshing the page'
         } else if (err.name === 'NotSupportedError') {
-          errorMessage += 'Camera not supported on this browser.'
+          errorMessage = '🌐 Camera not supported.\n\nPlease:\n• Use Chrome, Firefox, or Safari\n• Ensure you\'re on HTTPS (required for camera)\n• Try a different browser'
         } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-          errorMessage += 'Camera is being used by another application.'
+          errorMessage = '⚠️ Camera is busy.\n\nPlease:\n• Close other apps using the camera\n• Restart your browser\n• Check if camera is being used elsewhere'
         } else {
-          errorMessage += err.message || 'Unknown error occurred.'
+          errorMessage = `❌ ${err.message}\n\nPlease:\n• Refresh the page and try again\n• Check your camera settings\n• Ensure camera permissions are allowed`
         }
       } else {
-        errorMessage += 'Please check your camera settings and try again.'
+        errorMessage = '❓ Unknown camera error.\n\nPlease:\n• Refresh the page\n• Check camera permissions\n• Try a different browser'
       }
       
       setError(errorMessage)
     }
-  }
+  }, [width, height, facingMode])
 
-  const stopCamera = () => {
+  const retryCamera = useCallback(() => {
+    // Stop current stream if any
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
       setStream(null)
     }
+    // Clear error and try again
+    setError(null)
+    startCamera()
+  }, [stream, startCamera])
+
+  const stopCamera = () => {
+    console.log('🎥 Stopping camera...')
+    if (stream) {
+      stream.getTracks().forEach(track => {
+        console.log(`🎥 Stopping track: ${track.label}`)
+        track.stop()
+      })
+      setStream(null)
+    }
+    
+    // Clear video element
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+    
     setIsOpen(false)
     setError(null)
     setIsLoading(false)
@@ -138,22 +221,33 @@ export const useCamera = (options: CameraOptions = {}) => {
 
   const capturePhoto = (): Promise<Blob | null> => {
     return new Promise((resolve) => {
-      if (videoRef.current) {
+      if (videoRef.current && stream) {
+        console.log('🎥 Capturing photo...')
+        const video = videoRef.current
         const canvas = document.createElement('canvas')
         const context = canvas.getContext('2d')
         
-        canvas.width = videoRef.current.videoWidth
-        canvas.height = videoRef.current.videoHeight
+        // Set canvas size to video dimensions
+        canvas.width = video.videoWidth || video.clientWidth
+        canvas.height = video.videoHeight || video.clientHeight
         
-        if (context) {
-          context.drawImage(videoRef.current, 0, 0)
+        console.log('🎥 Canvas dimensions:', { width: canvas.width, height: canvas.height })
+        
+        if (context && canvas.width > 0 && canvas.height > 0) {
+          // Draw the video frame to canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height)
+          
+          // Convert to blob with high quality
           canvas.toBlob((blob) => {
+            console.log('🎥 ✅ Photo captured:', blob?.size, 'bytes')
             resolve(blob)
           }, 'image/jpeg', 0.9)
         } else {
+          console.error('🎥 ❌ Failed to capture photo - invalid canvas')
           resolve(null)
         }
       } else {
+        console.error('🎥 ❌ Failed to capture photo - no video or stream')
         resolve(null)
       }
     })
@@ -166,8 +260,13 @@ export const useCamera = (options: CameraOptions = {}) => {
       const a = document.createElement('a')
       a.href = url
       a.download = `compliance-scan-${new Date().getTime()}.jpg`
+      document.body.appendChild(a)
       a.click()
+      document.body.removeChild(a)
       URL.revokeObjectURL(url)
+      console.log('🎥 ✅ Photo downloaded')
+    } else {
+      console.error('🎥 ❌ Failed to download photo')
     }
   }
 
@@ -175,6 +274,7 @@ export const useCamera = (options: CameraOptions = {}) => {
   useEffect(() => {
     return () => {
       if (stream) {
+        console.log('🎥 Cleanup: stopping camera on unmount')
         stream.getTracks().forEach(track => track.stop())
       }
     }
@@ -190,6 +290,7 @@ export const useCamera = (options: CameraOptions = {}) => {
     stopCamera,
     capturePhoto,
     downloadPhoto,
-    checkCameraSupport
+    checkCameraSupport,
+    retryCamera
   }
 }
