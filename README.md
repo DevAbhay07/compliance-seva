@@ -39,7 +39,7 @@ Legal Metrology Scanner is a modern, responsive web application designed to stre
 
 ## Project Structure
 ```
-legal-metrology-scanner/
+compliance-seva/
 ├── src/
 │   ├── components/          # Reusable UI components
 │   │   ├── ui/              # Base UI components (Button, Modal, etc.)
@@ -82,7 +82,7 @@ legal-metrology-scanner/
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd legal-metrology-scanner
+cd compliance-seva
 
 # Install dependencies
 npm install
