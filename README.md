@@ -39,35 +39,70 @@ Legal Metrology Scanner is a modern, responsive web application designed to stre
 
 ## Project Structure
 ```
-legal-metrology-scanner/
-├── src/
-│   ├── components/          # Reusable UI components
-│   │   ├── ui/              # Base UI components (Button, Modal, etc.)
-│   │   ├── layout/          # Layout components (Navbar, Sidebar)
-│   │   └── CameraModal.tsx  # Camera interface component
-│   ├── pages/               # Page-level components
-│   │   ├── Home.tsx         # Landing page with hero section
-│   │   ├── Dashboard.tsx    # Analytics and compliance metrics
-│   │   ├── Scanner.tsx      # Camera scanning interface
-│   │   ├── Records.tsx      # Compliance records management
-│   │   └── Settings.tsx     # User preferences
-│   ├── hooks/               # Custom React hooks
-│   │   └── useCamera.ts     # Camera API management
-│   ├── store/               # Redux store configuration
-│   │   └── index.ts         # Store setup with sidebar state
-│   ├── lib/                 # Utility functions
-│   │   └── utils.ts         # Common utilities
-│   ├── types/               # TypeScript type definitions
-│   ├── App.tsx              # Main application component
-│   └── main.tsx             # Application entry point
-├── public/                  # Static assets
-├── dist/                    # Production build output
-├── .gitignore               # Git ignore patterns
-├── netlify.toml             # Netlify deployment configuration
-├── package.json             # Dependencies and scripts
-├── tailwind.config.js       # Tailwind CSS configuration
-├── tsconfig.json            # TypeScript configuration
-└── vite.config.ts           # Vite build configuration
+## 📂 Project Structure
+
+```bash
+compliance-seva/
+├── src/                         # Frontend (React + TypeScript)
+│   ├── components/              # Reusable UI components
+│   │   ├── ui/                  # Base UI components (Button, Modal, etc.)
+│   │   ├── layout/              # Layout components (Navbar, Sidebar)
+│   │   └── CameraModal.tsx      # Camera interface component
+│   ├── pages/                   # Page-level components
+│   │   ├── Home.tsx             # Landing page
+│   │   ├── Dashboard.tsx        # Analytics & compliance metrics
+│   │   ├── Scanner.tsx          # Camera scanning interface
+│   │   ├── Records.tsx          # Compliance records management
+│   │   └── Settings.tsx         # User preferences
+│   ├── hooks/                   # Custom React hooks
+│   │   └── useCamera.ts
+│   ├── store/                   # Redux store configuration
+│   │   └── index.ts
+│   ├── lib/                     
+│   │   ├── utils.ts             # Common utilities
+│   │   └── api.ts               # Frontend ↔ backend API helper
+│   ├── types/                   # TypeScript type definitions
+│   ├── App.tsx                  # Main application component
+│   └── main.tsx                 # Entry point
+│
+├── backend/                     # Backend (FastAPI + Python)
+│   ├── scrapers/                # Web scraping logic
+│   │   ├── amazon_scraper.py
+│   │   ├── flipkart_scraper.py
+│   │   └── base_scraper.py
+│   │
+│   ├── ocr/                     # OCR & image preprocessing
+│   │   ├── ocr_engine.py
+│   │   └── preprocess.py
+│   │
+│   ├── rules/                   # Legal Metrology rule validation
+│   │   ├── rule_engine.py
+│   │   └── rules.json
+│   │
+│   ├── api/                     # API layer
+│   │   ├── main.py              # FastAPI entry point
+│   │   └── routes/
+│   │       ├── scrape.py        # Endpoint: trigger scraping
+│   │       └── records.py       # Endpoint: compliance history
+│   │
+│   ├── database/                # Persistence layer
+│   │   ├── models.py            # ORM models (Product, Violations, Logs)
+│   │   └── db_config.py
+│   │
+│   ├── tests/                   # Backend tests
+│   │   └── __init__.py
+│   │
+│   └── requirements.txt         # Python dependencies
+│
+├── public/                      # Static assets
+├── dist/                        # Production build output
+├── .gitignore
+├── netlify.toml                 # Netlify deployment config
+├── package.json                 # NPM dependencies & scripts
+├── tailwind.config.js           # Tailwind CSS config
+├── tsconfig.json                # TypeScript config
+└── vite.config.ts               # Vite build config
+
 ```
 
 ---
@@ -82,7 +117,7 @@ legal-metrology-scanner/
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd legal-metrology-scanner
+cd compliance-seva
 
 # Install dependencies
 npm install
