@@ -1,4 +1,5 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Search, Bell, Menu, User, Check, ExternalLink } from 'lucide-react'
 
 interface NavbarProps {
@@ -6,14 +7,27 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
+  const navigate = useNavigate()
+
+  const handleProfileClick = () => {
+    navigate('/settings')
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm h-16">
       <div className="bg-purple-600 text-white px-4 py-1 text-xs h-6 flex items-center">
         <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-3 bg-gradient-to-b from-orange-500 via-white to-green-500 rounded-sm"></div>
-            <span>Government of India</span>
-            <ExternalLink className="w-3 h-3" />
+            <a 
+              href="https://www.india.gov.in/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-purple-200 transition-colors duration-200 flex items-center space-x-1"
+            >
+              <span>Government of India</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </div>
@@ -59,7 +73,11 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
               <span className="absolute -top-0.5 -right-0.5 w-3 h-3 sm:w-4 sm:h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center animate-pulse">3</span>
             </button>
 
-            <button className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation">
+            <button 
+              onClick={handleProfileClick}
+              className="flex items-center space-x-2 p-2 hover:bg-gray-100 rounded-xl transition-all duration-200 hover:scale-105 active:scale-95 touch-manipulation"
+              aria-label="Go to Settings"
+            >
               <div className="w-6 h-6 sm:w-7 sm:h-7 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                 <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Camera, Bug } from 'lucide-react'
+import { Camera, RefreshCw, HelpCircle } from 'lucide-react'
 
 interface CameraDebugProps {
   onStartCamera: () => void
@@ -8,7 +8,7 @@ interface CameraDebugProps {
 
 const CameraDebug: React.FC<CameraDebugProps> = ({ onStartCamera, onCheckSupport }) => {
   const handleCameraTest = async () => {
-    console.log('🔧 CAMERA DEBUG TEST STARTED')
+    console.log('🔧 CAMERA REFRESH TEST STARTED')
     console.log('🔧 Navigator:', {
       userAgent: navigator.userAgent,
       platform: navigator.platform,
@@ -37,28 +37,28 @@ const CameraDebug: React.FC<CameraDebugProps> = ({ onStartCamera, onCheckSupport
       }
     }
     
-    console.log('🔧 Starting camera test...')
+    console.log('🔧 Starting camera refresh...')
     onStartCamera()
   }
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 space-y-2">
+    <div className="fixed bottom-4 right-4 z-50 space-y-3">
       <button
         onClick={handleCameraTest}
-        className="bg-red-600 hover:bg-red-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center space-x-2"
-        title="Debug Camera"
+        className="bg-gov-blue hover:bg-gov-blue-light text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center space-x-2 group"
+        title="Refresh Camera"
       >
-        <Bug className="w-5 h-5" />
-        <span className="text-sm font-medium hidden sm:block">Debug Camera</span>
+        <RefreshCw className="w-5 h-5" />
+        <span className="text-sm font-medium hidden sm:block group-hover:block">Refresh Camera</span>
       </button>
       
       <button
         onClick={onCheckSupport}
-        className="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center space-x-2"
-        title="Check Camera Support"
+        className="bg-gray-600 hover:bg-gray-700 text-white p-3 rounded-full shadow-lg transition-all duration-200 hover:scale-105 flex items-center space-x-2 group"
+        title="Support"
       >
-        <Camera className="w-5 h-5" />
-        <span className="text-sm font-medium hidden sm:block">Check Support</span>
+        <HelpCircle className="w-5 h-5" />
+        <span className="text-sm font-medium hidden sm:block group-hover:block">Support</span>
       </button>
     </div>
   )

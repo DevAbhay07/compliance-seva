@@ -130,19 +130,19 @@ const Scanner: React.FC = () => {
     setIsScanning(false)
   }
 
-  const handleCameraDebug = async () => {
-    console.log('📷 Scanner Debug: Starting camera')
+  const handleCameraRefresh = async () => {
+    console.log('📷 Scanner: Refreshing camera')
     try {
       await camera.startCamera()
       setActiveMethod('camera')
     } catch (error) {
-      console.error('📷 Scanner Debug: Camera failed:', error)
+      console.error('📷 Scanner: Camera refresh failed:', error)
     }
   }
 
-  const handleCheckCameraSupport = async () => {
+  const handleCameraSupport = async () => {
     const isSupported = await camera.checkCameraSupport()
-    console.log('📷 Scanner Camera support check:', isSupported)
+    console.log('📷 Scanner: Camera support check:', isSupported)
     alert(`Camera support: ${isSupported ? 'Supported ✅' : 'Not supported ❌'}`)
   }
 
@@ -440,10 +440,10 @@ const Scanner: React.FC = () => {
         description="Position the product label clearly in the frame and capture"
       />
 
-      {/* Debug Component (remove in production) */}
+      {/* Camera Support Tools */}
       <CameraDebug
-        onStartCamera={handleCameraDebug}
-        onCheckSupport={handleCheckCameraSupport}
+        onStartCamera={handleCameraRefresh}
+        onCheckSupport={handleCameraSupport}
       />
     </div>
   )

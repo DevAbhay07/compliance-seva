@@ -15,7 +15,6 @@ import {
 } from 'lucide-react'
 import { useCamera } from '../hooks/useCamera'
 import CameraModal from '../components/CameraModal'
-import CameraDebug from '../components/CameraDebug'
 
 const Home: React.FC = () => {
   const navigate = useNavigate()
@@ -73,20 +72,6 @@ const Home: React.FC = () => {
     }
   }
 
-  const handleCameraDebug = async () => {
-    console.log('🏠 Debug: Starting camera from Home page')
-    try {
-      await camera.startCamera()
-    } catch (error) {
-      console.error('🏠 Debug: Camera failed:', error)
-    }
-  }
-
-  const handleCheckCameraSupport = async () => {
-    const isSupported = await camera.checkCameraSupport()
-    console.log('🏠 Camera support check:', isSupported)
-    alert(`Camera support: ${isSupported ? 'Supported ✅' : 'Not supported ❌'}`)
-  }
   const features = [
     {
       icon: ScanLine,
@@ -395,12 +380,6 @@ const Home: React.FC = () => {
         onRetry={camera.retryCamera}
         title="Product Label Scanner"
         description="Position the product label clearly in the frame and capture"
-      />
-
-      {/* Debug Component (remove in production) */}
-      <CameraDebug
-        onStartCamera={handleCameraDebug}
-        onCheckSupport={handleCheckCameraSupport}
       />
     </div>
   )

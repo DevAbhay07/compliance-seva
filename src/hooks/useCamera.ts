@@ -6,6 +6,31 @@ interface CameraOptions {
   facingMode?: 'user' | 'environment'
 }
 
+// Module-level persistent stream cache for fast re-opens
+let cachedStream: MediaStream | null = null
+let cachedDeviceId: string | null = null
+
+// Utility function to properly stop a MediaStream
+const stopStream = (stream: MediaStream | null) => {
+  if (stream) {
+    console.log('🎥 Stopping stream tracks:', stream.getTracks().length)
+    stream.getTracks().forEach(track => {
+      console.log(`🎥 Stopping track: ${track.label || 'Unknown'}`)
+      track.stop()
+    })
+  }
+}
+
+// Cleanup function for cached stream
+const cleanupCachedStream = () => {
+  if (cachedStream) {
+    console.log('🎥 Cleaning up cached stream')
+    stopStream(cachedStream)
+    cachedStream = null
+    cachedDeviceId = null
+  }
+}
+
 export const useCamera = (options: CameraOptions = {}) => {
   const [isOpen, setIsOpen] = useState(false)
   const [stream, setStream] = useState<MediaStream | null>(null)
@@ -33,15 +58,12 @@ export const useCamera = (options: CameraOptions = {}) => {
   }
 
   const startCamera = useCallback(async () => {
+    const t0 = performance.now()
+    console.log('🎥 Camera start requested', { timestamp: t0 })
+    
     try {
       setError(null)
       setIsLoading(true)
-      console.log('🎥 Starting camera initialization...', {
-        hasNavigator: !!navigator,
-        hasMediaDevices: !!navigator?.mediaDevices,
-        hasGetUserMedia: !!navigator?.mediaDevices?.getUserMedia,
-        userAgent: navigator?.userAgent
-      })
       
       // Enhanced browser compatibility check
       if (!navigator) {
@@ -56,107 +78,87 @@ export const useCamera = (options: CameraOptions = {}) => {
         throw new Error('getUserMedia not supported - browser may be too old')
       }
 
-      console.log('🎥 Browser compatibility check passed')
+      console.log('🎥 Browser compatibility check passed', { elapsed: performance.now() - t0 })
       
-      // Check for available devices first
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices()
-        const videoDevices = devices.filter(device => device.kind === 'videoinput')
-        console.log('🎥 Available video devices:', videoDevices.length, videoDevices.map(d => ({ deviceId: d.deviceId, label: d.label || 'Unknown' })))
+      // Check if we have a cached stream that's still active
+      if (cachedStream && cachedStream.active && cachedStream.getVideoTracks().length > 0) {
+        console.log('🎥 ⚡ Using cached stream', { elapsed: performance.now() - t0 })
+        setStream(cachedStream)
+        setIsOpen(true)
         
-        if (videoDevices.length === 0) {
-          throw new Error('No camera devices found on this device')
+        // Wait for video element to be available
+        let videoElement = videoRef.current
+        let retries = 0
+        const maxRetries = 10
+        
+        while (!videoElement && retries < maxRetries) {
+          console.log(`🎥 Waiting for video element... attempt ${retries + 1}/${maxRetries}`)
+          await new Promise(resolve => setTimeout(resolve, 50)) // Reduced wait time for cached stream
+          videoElement = videoRef.current
+          retries++
         }
-      } catch (deviceError) {
-        console.warn('🎥 ⚠️ Could not enumerate devices (may still work):', deviceError)
+        
+        if (videoElement) {
+          videoElement.srcObject = cachedStream
+          videoElement.muted = true
+          videoElement.playsInline = true
+          videoElement.autoplay = true
+          
+          try {
+            await videoElement.play()
+            console.log('🎥 ⚡ Cached stream playing', { elapsed: performance.now() - t0 })
+            setIsLoading(false)
+            return
+          } catch (playError) {
+            console.warn('🎥 ⚠️ Cached stream play failed:', playError)
+          }
+        }
       }
-
-      console.log('🎥 Requesting camera permissions...')
+      
+      // No cached stream available, request new one with low-latency constraints
+      console.log('🎥 📡 Requesting new camera stream', { elapsed: performance.now() - t0 })
+      
+      // Fast preview constraints - prioritize speed over quality for initial display
+      const fastConstraints = {
+        video: {
+          width: { ideal: 640, min: 320 },
+          height: { ideal: 480, min: 240 },
+          facingMode: { ideal: facingMode },
+          frameRate: { ideal: 15, min: 10 } // Lower framerate for faster startup
+        }
+      }
       
       let mediaStream: MediaStream
+      
+      try {
+        console.log('🎥 getUserMedia start (fast)', { elapsed: performance.now() - t0 })
+        mediaStream = await navigator.mediaDevices.getUserMedia(fastConstraints)
+        console.log('🎥 getUserMedia end (fast)', { 
+          elapsed: performance.now() - t0,
+          tracks: mediaStream.getVideoTracks().length 
+        })
+      } catch (fastError) {
+        console.warn('🎥 ⚠️ Fast constraints failed, trying fallback:', fastError)
+        // Fallback to basic constraints
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true })
+        console.log('🎥 getUserMedia end (fallback)', { elapsed: performance.now() - t0 })
+      }
 
-      // Progressive constraints for better compatibility
-      const constraintOptions = [
-        // Best quality with rear camera preference
-        {
-          video: {
-            width: { ideal: width, min: 320, max: 1920 },
-            height: { ideal: height, min: 240, max: 1080 },
-            facingMode: { ideal: facingMode },
-            frameRate: { ideal: 30, min: 10, max: 60 }
-          }
-        },
-        // Fallback without facingMode (for devices without rear camera)
-        {
-          video: {
-            width: { ideal: 1280, min: 320, max: 1920 },
-            height: { ideal: 720, min: 240, max: 1080 },
-            frameRate: { ideal: 30, min: 10, max: 60 }
-          }
-        },
-        // Basic HD constraints
-        {
-          video: {
-            width: { ideal: 1280, min: 320 },
-            height: { ideal: 720, min: 240 }
-          }
-        },
-        // Standard resolution
-        {
-          video: {
-            width: { ideal: 640, min: 320 },
-            height: { ideal: 480, min: 240 }
-          }
-        },
-        // Minimal constraints (last resort)
-        { video: true }
-      ]
-
-      let lastError: any = null
-      let attemptSuccess = false
-
-      for (let i = 0; i < constraintOptions.length; i++) {
-        try {
-          console.log(`🎥 Attempt ${i + 1}/${constraintOptions.length}:`, JSON.stringify(constraintOptions[i], null, 2))
-          
-          // Add timeout to prevent hanging
-          const streamPromise = navigator.mediaDevices.getUserMedia(constraintOptions[i])
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Camera request timeout - please try again')), 10000)
-          )
-          
-          mediaStream = await Promise.race([streamPromise, timeoutPromise]) as MediaStream
-          console.log('🎥 ✅ Camera started successfully with constraints:', constraintOptions[i])
-          attemptSuccess = true
-          break
-        } catch (attemptError: any) {
-          console.warn(`🎥 ⚠️ Attempt ${i + 1} failed:`, {
-            name: attemptError.name,
-            message: attemptError.message,
-            constraint: constraintOptions[i]
-          })
-          lastError = attemptError
-          
-          // Don't continue if it's a permission error
-          if (attemptError.name === 'NotAllowedError' || attemptError.name === 'PermissionDeniedError') {
-            console.error('🎥 ❌ Permission denied, stopping attempts')
-            break
-          }
-        }
+      // Cache the stream for future use
+      cachedStream = mediaStream
+      const videoTrack = mediaStream.getVideoTracks()[0]
+      if (videoTrack) {
+        cachedDeviceId = videoTrack.getSettings().deviceId || null
       }
       
-      if (!attemptSuccess || !mediaStream!) {
-        throw lastError || new Error('All camera initialization attempts failed')
-      }
-
-      console.log('🎥 MediaStream obtained:', {
+      console.log('🎥 MediaStream obtained and cached:', {
+        elapsed: performance.now() - t0,
         id: mediaStream.id,
         active: mediaStream.active,
         tracks: mediaStream.getVideoTracks().map(t => ({ 
           label: t.label || 'Unknown Camera', 
           enabled: t.enabled, 
-          readyState: t.readyState,
-          constraints: t.getConstraints()
+          readyState: t.readyState
         }))
       })
       
@@ -181,95 +183,43 @@ export const useCamera = (options: CameraOptions = {}) => {
         return
       }
       
-      // Enhanced video setup with better error handling
-      if (videoElement) {
-        const video = videoElement
-        console.log('🎥 Setting up video element...')
+      // Attach stream immediately for faster perceived performance
+      const video = videoElement
+      console.log('🎥 Setting up video element...', { elapsed: performance.now() - t0 })
+      
+      // Clear any previous source
+      video.srcObject = null
+      
+      // Set new stream immediately
+      video.srcObject = mediaStream
+      video.muted = true
+      video.playsInline = true
+      video.autoplay = true
+      
+      // Start video playback
+      try {
+        console.log('🎥 Starting video.play()', { elapsed: performance.now() - t0 })
+        await video.play()
+        console.log('🎥 ✅ Video.play() resolved', { elapsed: performance.now() - t0 })
         
-        // Clear any previous source
-        video.srcObject = null
-        
-        // Set new stream
-        video.srcObject = mediaStream
-        video.muted = true // Prevent audio feedback
-        video.playsInline = true // Important for mobile
-        video.autoplay = true
-        
-        // Enhanced video loading with multiple event handlers
-        const setupVideoPlayback = () => {
-          return new Promise<void>((resolve, reject) => {
-            const cleanup = () => {
-              video.removeEventListener('loadedmetadata', onLoadedMetadata)
-              video.removeEventListener('canplay', onCanPlay)
-              video.removeEventListener('playing', onPlaying)
-              video.removeEventListener('error', onError)
-              clearTimeout(timeout)
-            }
-            
-            const timeout = setTimeout(() => {
-              console.warn('🎥 ⚠️ Video setup timeout - continuing anyway')
-              cleanup()
-              resolve()
-            }, 8000)
-            
-            const onLoadedMetadata = () => {
-              console.log('🎥 ✅ Video metadata loaded:', {
-                videoWidth: video.videoWidth,
-                videoHeight: video.videoHeight,
-                duration: video.duration
-              })
-            }
-            
-            const onCanPlay = () => {
-              console.log('🎥 ✅ Video can play')
-            }
-            
-            const onPlaying = () => {
-              console.log('🎥 ✅ Video is playing')
-              cleanup()
-              resolve()
-            }
-            
-            const onError = (e: Event) => {
-              console.error('🎥 ❌ Video error:', e)
-              cleanup()
-              reject(new Error('Video playback failed'))
-            }
-            
-            video.addEventListener('loadedmetadata', onLoadedMetadata)
-            video.addEventListener('canplay', onCanPlay)
-            video.addEventListener('playing', onPlaying)
-            video.addEventListener('error', onError)
-          })
-        }
-        
-        // Start video playback
-        try {
-          await video.play()
-          console.log('🎥 Video play() called successfully')
-          
-          // Wait for actual playback
-          await setupVideoPlayback()
-          console.log('🎥 ✅ Video fully loaded and playing')
-          
-          // Final delay to ensure video is displaying
-          setTimeout(() => {
-            console.log('🎥 ✅ Camera setup complete, removing loading state')
-            setIsLoading(false)
-          }, 1000)
-        } catch (playError) {
-          console.error('🎥 ❌ Video play failed:', playError)
-          // Still remove loading state
+        // Wait briefly for stable playback
+        setTimeout(() => {
+          console.log('🎥 ✅ Camera setup complete', { elapsed: performance.now() - t0 })
           setIsLoading(false)
-        }
-      } else {
-        console.warn('🎥 ⚠️ No video element available after retries')
+          
+          // Optional: Start background upgrade to high-res for better capture quality
+          upgradeToHighResInBackground(mediaStream, t0)
+        }, 200) // Minimal delay for stability
+        
+      } catch (playError) {
+        console.error('🎥 ❌ Video play failed:', playError)
         setIsLoading(false)
       }
       
-      console.log('🎥 ✅ Camera initialization complete')
+      console.log('🎥 ✅ Camera initialization complete', { elapsed: performance.now() - t0 })
     } catch (err: any) {
       console.error('🎥 ❌ Camera initialization failed:', {
+        elapsed: performance.now() - t0,
         name: err?.name,
         message: err?.message,
         stack: err?.stack
@@ -299,25 +249,89 @@ export const useCamera = (options: CameraOptions = {}) => {
       setError(errorMessage)
     }
   }, [width, height, facingMode])
+  
+  // Background upgrade to high-res for better capture quality
+  const upgradeToHighResInBackground = useCallback(async (currentStream: MediaStream, startTime: number) => {
+    try {
+      console.log('🎥 🔄 Starting background upgrade to high-res', { elapsed: performance.now() - startTime })
+      
+      // Don't upgrade if we already have good resolution
+      const videoTrack = currentStream.getVideoTracks()[0]
+      if (videoTrack) {
+        const settings = videoTrack.getSettings()
+        if (settings.width && settings.width >= 1280) {
+          console.log('🎥 ✅ Already high-res, skipping upgrade', { 
+            width: settings.width, 
+            height: settings.height 
+          })
+          return
+        }
+      }
+      
+      const highResConstraints = {
+        video: {
+          width: { ideal: width, min: 640 },
+          height: { ideal: height, min: 480 },
+          facingMode: { ideal: facingMode },
+          frameRate: { ideal: 30 }
+        }
+      }
+      
+      const highResStream = await navigator.mediaDevices.getUserMedia(highResConstraints)
+      console.log('🎥 ✅ High-res stream obtained', { 
+        elapsed: performance.now() - startTime,
+        newResolution: highResStream.getVideoTracks()[0]?.getSettings()
+      })
+      
+      // Replace cached stream with high-res version
+      if (cachedStream === currentStream) {
+        // Stop old tracks
+        currentStream.getTracks().forEach(track => track.stop())
+        
+        // Update cache
+        cachedStream = highResStream
+        setStream(highResStream)
+        
+        // Update video element if still active
+        if (videoRef.current && videoRef.current.srcObject === currentStream) {
+          videoRef.current.srcObject = highResStream
+        }
+        
+        console.log('🎥 ✅ Upgraded to high-res stream', { elapsed: performance.now() - startTime })
+      } else {
+        // Current stream was replaced, stop the high-res stream
+        highResStream.getTracks().forEach(track => track.stop())
+      }
+      
+    } catch (upgradeError) {
+      console.warn('🎥 ⚠️ High-res upgrade failed (not critical):', upgradeError)
+    }
+  }, [width, height, facingMode])
 
   const retryCamera = useCallback(() => {
-    // Stop current stream if any
+    console.log('🎥 Retrying camera...')
+    // Clear any error state
+    setError(null)
+    
+    // Clear cached stream on retry to force fresh attempt
+    cleanupCachedStream()
+    
     if (stream) {
-      stream.getTracks().forEach(track => track.stop())
+      stopStream(stream)
       setStream(null)
     }
-    // Clear error and try again
-    setError(null)
+    
+    // Try again
     startCamera()
   }, [stream, startCamera])
 
   const stopCamera = () => {
-    console.log('🎥 Stopping camera...')
+    console.log('🎥 Stopping camera modal...')
+    
+    // Stop the current stream immediately when modal closes
     if (stream) {
-      stream.getTracks().forEach(track => {
-        console.log(`🎥 Stopping track: ${track.label}`)
-        track.stop()
-      })
+      console.log('🎥 Stopping current stream tracks')
+      stopStream(stream)
       setStream(null)
     }
     
@@ -326,10 +340,40 @@ export const useCamera = (options: CameraOptions = {}) => {
       videoRef.current.srcObject = null
     }
     
+    // Keep cached stream for warm restarts, but ensure current stream is stopped
+    // If current stream is the cached stream, we need to clear cache to avoid reusing stopped stream
+    if (stream === cachedStream) {
+      console.log('🎥 Current stream was cached stream, clearing cache')
+      cachedStream = null
+      cachedDeviceId = null
+    }
+    
     setIsOpen(false)
     setError(null)
     setIsLoading(false)
+    
+    console.log('🎥 ✅ Camera modal closed and stream stopped')
   }
+  
+  // Function to fully cleanup cached stream (call on app unmount or when truly done)
+  const cleanupCamera = useCallback(() => {
+    console.log('🎥 Full camera cleanup...')
+    
+    if (stream) {
+      stopStream(stream)
+      setStream(null)
+    }
+    
+    cleanupCachedStream()
+    
+    if (videoRef.current) {
+      videoRef.current.srcObject = null
+    }
+    
+    setIsOpen(false)
+    setError(null)
+    setIsLoading(false)
+  }, [stream])
 
   const capturePhoto = (): Promise<Blob | null> => {
     return new Promise((resolve) => {
@@ -382,15 +426,13 @@ export const useCamera = (options: CameraOptions = {}) => {
     }
   }
 
-  // Cleanup on unmount
+  // Cleanup on unmount - full cleanup when component unmounts
   useEffect(() => {
     return () => {
-      if (stream) {
-        console.log('🎥 Cleanup: stopping camera on unmount')
-        stream.getTracks().forEach(track => track.stop())
-      }
+      console.log('🎥 Component unmounting - full cleanup')
+      cleanupCachedStream()
     }
-  }, [stream])
+  }, [])
 
   return {
     isOpen,
@@ -400,6 +442,7 @@ export const useCamera = (options: CameraOptions = {}) => {
     videoRef,
     startCamera,
     stopCamera,
+    cleanupCamera,
     capturePhoto,
     downloadPhoto,
     checkCameraSupport,
