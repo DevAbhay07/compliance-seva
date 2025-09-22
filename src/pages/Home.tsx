@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useCamera } from '../hooks/useCamera'
 import CameraModal from '../components/CameraModal'
+import Logo from '../components/Logo'
 
 const Home: React.FC = () => {
   const navigate = useNavigate()
@@ -121,7 +122,7 @@ const Home: React.FC = () => {
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex items-center justify-center mb-4 sm:mb-6">
               <div className="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-full">
-                <Shield className="w-8 h-8 sm:w-12 sm:h-12 text-white" />
+                <Logo size="xl" />
               </div>
             </div>
             

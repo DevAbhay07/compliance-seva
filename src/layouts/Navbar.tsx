@@ -1,6 +1,7 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Search, Bell, Menu, User, Check, ExternalLink } from 'lucide-react'
+import { Search, Bell, Menu, User, ExternalLink } from 'lucide-react'
+import Logo from '../components/Logo'
 
 interface NavbarProps {
   onToggleSidebar: () => void
@@ -43,15 +44,8 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
               <Menu className="w-5 h-5 text-gray-600" />
             </button>
             
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg sm:rounded-xl flex items-center justify-center shadow-lg">
-                <Check className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="hidden sm:flex flex-col justify-center">
-                <h1 className="text-sm sm:text-base font-semibold text-gray-900 leading-tight">Compliance Seva</h1>
-                <p className="text-xs text-gray-500 leading-tight">Legal Metrology Scanner</p>
-              </div>
-            </div>
+            <Logo size="md" showText={true} className="hidden sm:flex" />
+            <Logo size="sm" className="flex sm:hidden" />
           </div>
 
           <div className="flex items-center space-x-1 sm:space-x-3">
