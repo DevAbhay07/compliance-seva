@@ -8,6 +8,10 @@
     @apply border-gray-200;
   }
   
+  html {
+    @apply scroll-smooth;
+  }
+  
   body {
     @apply bg-white text-gray-900 font-noto-sans;
     font-feature-settings: "rlig" 1, "calt" 1;

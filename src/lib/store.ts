@@ -8,7 +8,7 @@ import complianceSlice from './slices/complianceSlice'
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['compliance'] // Only persist compliance data
+  whitelist: ['compliance', 'ui'] // Persist compliance data and UI preferences
 }
 
 const rootReducer = combineReducers({

@@ -113,12 +113,13 @@ const Home: React.FC = () => {
   ]
 
   return (
-    <div className="min-h-screen">
-      {/* Hero Section - Gemini Inspired */}
-      <section className="relative bg-gradient-to-br from-gov-blue via-gov-blue-light to-gov-blue bg-opacity-95 text-white overflow-hidden">
-        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
-        
-        <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32">
+    <div className="min-h-screen bg-gradient-to-br from-gov-blue via-gov-blue-light to-gov-blue relative overflow-hidden scroll-smooth">
+      {/* Full page gradient overlay */}
+      <div className="absolute inset-0 bg-black bg-opacity-10"></div>
+      
+      {/* Hero Section - Streamline Compliance Checks */}
+      <section className="relative z-10 text-white overflow-hidden">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-32">
           <div className="max-w-4xl mx-auto text-center">
             <div className="flex items-center justify-center mb-4 sm:mb-6">
               <div className="bg-white/10 backdrop-blur-sm p-3 sm:p-4 rounded-full">
@@ -263,107 +264,116 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Powerful Features for Compliance Officers
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Comprehensive tools designed specifically for government officers to ensure Legal Metrology compliance
-            </p>
-          </div>
+      {/* Features Section - White Card */}
+      <section className="relative z-10 py-16">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* White Card Container */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 transition-all ease-in-out duration-300 hover:shadow-3xl">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 transition-all ease-in-out duration-300">
+                Powerful Features for Compliance Officers
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto transition-all ease-in-out duration-300">
+                Comprehensive tools designed specifically for government officers to ensure Legal Metrology compliance
+              </p>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {features.map((feature, index) => {
-              const Icon = feature.icon
-              return (
-                <div key={index} className="gov-card group hover:scale-105 transition-all duration-300">
-                  <div className="flex items-center mb-4">
-                    <div className={`p-3 rounded-lg bg-gray-50 ${feature.color}`}>
-                      <Icon className="w-6 h-6" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {features.map((feature, index) => {
+                const Icon = feature.icon
+                return (
+                  <div key={index} className="bg-blue-50 hover:bg-blue-100 rounded-xl p-6 transition-all ease-in-out duration-300 hover:scale-105 hover:shadow-lg">
+                    <div className="flex items-center mb-4">
+                      <div className="p-3 rounded-lg bg-gov-blue-light shadow-md">
+                        <Icon className="w-6 h-6 text-white" />
+                      </div>
                     </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 transition-all ease-in-out duration-300">
+                      {feature.title}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed transition-all ease-in-out duration-300">
+                      {feature.description}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* How It Works Section */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Three simple ways to scan and verify product compliance
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {scanMethods.map((method, index) => {
-              const Icon = method.icon
-              return (
-                <div key={index} className="text-center">
-                  <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                    <Icon className="w-8 h-8 text-gov-blue" />
-                  </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
-                    {method.title}
-                  </h3>
-                  <p className="text-gray-600">
-                    {method.description}
-                  </p>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="text-center mt-12">
-            <div className="inline-flex items-center space-x-2 bg-white px-6 py-3 rounded-lg shadow-sm">
-              <CheckCircle className="w-5 h-5 text-success" />
-              <span className="text-gray-700 font-medium">Instant AI analysis and compliance report generation</span>
+                )
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 bg-gov-blue text-white">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">
-              Ready to Start Compliance Checking?
-            </h2>
-            <p className="text-xl mb-8 text-white/90">
-              Join government officers across India in ensuring Legal Metrology compliance with our AI-powered scanning solution.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                to="/scanner"
-                className="btn-primary bg-white text-gov-blue hover:bg-gray-100 px-8 py-4 text-lg inline-flex items-center space-x-2"
-              >
-                <ScanLine className="w-5 h-5" />
-                <span>Begin Scanning</span>
-              </Link>
+      {/* How It Works Section - White Card */}
+      <section className="relative z-10 py-16">
+        <div className="container mx-auto px-4 max-w-7xl">
+          {/* White Card Container */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 transition-all ease-in-out duration-300 hover:shadow-3xl">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4 transition-all ease-in-out duration-300">
+                How It Works
+              </h2>
+              <p className="text-xl text-gray-600 max-w-2xl mx-auto transition-all ease-in-out duration-300">
+                Three simple ways to scan and verify product compliance
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {scanMethods.map((method, index) => {
+                const Icon = method.icon
+                return (
+                  <div key={index} className="text-center transition-all ease-in-out duration-300 hover:scale-105">
+                    <div className="bg-blue-100 hover:bg-blue-200 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-lg transition-all ease-in-out duration-300">
+                      <Icon className="w-8 h-8 text-gov-blue" />
+                    </div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2 transition-all ease-in-out duration-300">
+                      {method.title}
+                    </h3>
+                    <p className="text-gray-600 transition-all ease-in-out duration-300">
+                      {method.description}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="text-center mt-12">
+              <div className="inline-flex items-center space-x-2 bg-blue-50 hover:bg-blue-100 px-6 py-3 rounded-lg shadow-md transition-all ease-in-out duration-300 hover:scale-105">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <span className="text-gray-700 font-medium">Instant AI analysis and compliance report generation</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - White Card */}
+      <section className="relative z-10 py-16 pb-20">
+        <div className="container mx-auto px-4 max-w-5xl">
+          {/* White Card Container */}
+          <div className="bg-white rounded-2xl shadow-2xl p-8 sm:p-12 text-center transition-all ease-in-out duration-300 hover:shadow-3xl">
+            <div className="max-w-3xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6 transition-all ease-in-out duration-300">
+                Ready to Start Compliance Checking?
+              </h2>
+              <p className="text-xl mb-8 text-gray-600 transition-all ease-in-out duration-300">
+                Join government officers across India in ensuring Legal Metrology compliance with our AI-powered scanning solution.
+              </p>
               
-              <Link
-                to="/dashboard"
-                className="btn-outline px-8 py-4 text-lg"
-              >
-                View Analytics
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  to="/scanner"
+                  className="bg-gov-blue hover:bg-gov-blue-light text-white px-8 py-4 text-lg inline-flex items-center justify-center space-x-2 rounded-xl transition-all ease-in-out duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  <ScanLine className="w-5 h-5" />
+                  <span>Begin Scanning</span>
+                </Link>
+                
+                <Link
+                  to="/dashboard"
+                  className="bg-blue-50 hover:bg-blue-100 text-gov-blue border-2 border-gov-blue hover:border-gov-blue-light px-8 py-4 text-lg rounded-xl transition-all ease-in-out duration-300 hover:scale-105 shadow-lg hover:shadow-xl"
+                >
+                  View Analytics
+                </Link>
+              </div>
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@ interface UIState {
 }
 
 const initialState: UIState = {
-  sidebarOpen: true,
+  sidebarOpen: false,
   currentPage: 'home',
   theme: 'light',
   notifications: []
