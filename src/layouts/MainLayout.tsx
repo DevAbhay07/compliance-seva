@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
+import { useLocation } from 'react-router-dom'
 import { RootState } from '../lib/store'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
@@ -12,6 +13,9 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { sidebarOpen } = useSelector((state: RootState) => state.ui)
   const dispatch = useDispatch()
+  const location = useLocation()
+  
+  const isHomePage = location.pathname === '/'
 
   const handleToggleSidebar = () => {
     dispatch(toggleSidebar())
@@ -30,12 +34,24 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
       }`}>
         {/* Page Content with fade-in animation and responsive padding */}
-        <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl animate-fade-in">
-            <div className="transition-all duration-500 ease-out">
+        <main className={`flex-1 overflow-auto ${
+          isHomePage 
+            ? 'bg-transparent' 
+            : 'bg-gradient-to-br from-gray-50 to-gray-100'
+        }`}>
+          {isHomePage ? (
+            // Home page: no container padding, let it handle its own layout
+            <div className="animate-fade-in">
               {children}
             </div>
-          </div>
+          ) : (
+            // Other pages: use container with padding
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl animate-fade-in">
+              <div className="transition-all duration-500 ease-out">
+                {children}
+              </div>
+            </div>
+          )}
         </main>
       </div>
       
