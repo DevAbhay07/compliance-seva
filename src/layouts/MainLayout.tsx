@@ -29,7 +29,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <Sidebar isOpen={sidebarOpen} />
       
-      {/* Main Content Area */}
+      {/* Main Content Area - pt-16 matches navbar height exactly (64px) */}
       <div className={`flex-1 flex flex-col transition-all duration-300 ease-in-out pt-16 ${
         sidebarOpen ? 'lg:ml-64' : 'lg:ml-16'
       }`}>
@@ -45,7 +45,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               {children}
             </div>
           ) : (
-            // Other pages: use container with padding
+            // Other pages: use container with padding, ensure tight alignment
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 max-w-7xl animate-fade-in">
               <div className="transition-all duration-500 ease-out">
                 {children}

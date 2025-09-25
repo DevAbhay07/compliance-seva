@@ -79,6 +79,21 @@
     animation: smoothBounce 2s ease-in-out infinite;
   }
 
+  .animate-scale-in {
+    animation: scaleIn 0.2s ease-out;
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   @keyframes smoothBounce {
     0%, 20%, 53%, 80%, 100% {
       animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
