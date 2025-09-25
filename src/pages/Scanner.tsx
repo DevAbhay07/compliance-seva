@@ -16,7 +16,6 @@ import { startScan, completeScan } from '../lib/slices/complianceSlice'
 import { generateId } from '../lib/utils'
 import { useCamera } from '../hooks/useCamera'
 import CameraModal from '../components/CameraModal'
-import CameraDebug from '../components/CameraDebug'
 
 const Scanner: React.FC = () => {
   const dispatch = useDispatch()
@@ -438,12 +437,6 @@ const Scanner: React.FC = () => {
         onRetry={camera.retryCamera}
         title="Product Label Scanner"
         description="Position the product label clearly in the frame and capture"
-      />
-
-      {/* Camera Support Tools */}
-      <CameraDebug
-        onStartCamera={handleCameraRefresh}
-        onCheckSupport={handleCameraSupport}
       />
     </div>
   )

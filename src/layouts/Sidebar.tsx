@@ -8,7 +8,8 @@ import {
   FileText, 
   Settings, 
   Activity,
-  CheckCircle
+  CheckCircle,
+  Shield
 } from 'lucide-react'
 import { RootState } from '../lib/store'
 import { setCurrentPage } from '../lib/slices/uiSlice'
@@ -53,6 +54,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       icon: FileText, 
       path: '/records',
       description: 'Compliance history and reports'
+    },
+    { 
+      id: 'rules-engine', 
+      label: 'Rules Engine', 
+      icon: Shield, 
+      path: '/rules-engine',
+      description: 'Manage compliance rules and violations'
     },
     { 
       id: 'settings', 
