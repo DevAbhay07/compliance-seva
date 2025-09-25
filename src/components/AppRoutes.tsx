@@ -5,6 +5,7 @@ import Home from '../pages/Home'
 import Dashboard from '../pages/Dashboard'
 import Scanner from '../pages/Scanner'
 import Records from '../pages/Records'
+import RulesEngine from '../pages/RulesEngine'
 import Settings from '../pages/Settings'
 
 const AppRoutes: React.FC = () => {
@@ -28,6 +29,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/records" element={
         <MainLayout>
           <Records />
+        </MainLayout>
+      } />
+      <Route path="/rules-engine" element={
+        <MainLayout>
+          <RulesEngine />
         </MainLayout>
       } />
       <Route path="/settings" element={
