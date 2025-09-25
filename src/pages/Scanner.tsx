@@ -236,7 +236,13 @@ const Scanner: React.FC = () => {
               className={`gov-card cursor-pointer transition-all duration-200 hover:scale-105 ${
                 isActive ? `ring-2 ring-${method.color.replace('text-', '')} ${method.borderColor}` : ''
               }`}
-              onClick={() => setActiveMethod(isActive ? null : method.id)}
+              onClick={(e) => {
+                // Don't toggle if clicking inside the active URL input area
+                if (method.id === 'url' && isActive && (e.target as HTMLElement).closest('.url-input-area')) {
+                  return
+                }
+                setActiveMethod(isActive ? null : method.id)
+              }}
             >
               <div className="text-center">
                 <div className={`mx-auto w-16 h-16 rounded-full ${method.bgColor} flex items-center justify-center mb-4`}>
@@ -274,24 +280,46 @@ const Scanner: React.FC = () => {
                     )}
                     
                     {method.id === 'url' && (
-                      <div className="space-y-2">
-                        <input
-                          type="text"
-                          placeholder="Enter product URL..."
-                          value={urlInput}
-                          onChange={(e) => setUrlInput(e.target.value)}
-                          className="gov-input text-sm"
-                          disabled={isScanning}
-                        />
+                      <div className="space-y-3 url-input-area" onClick={(e) => e.stopPropagation()}>
+                        <div className="relative">
+                          <input
+                            type="url"
+                            placeholder="Paste or type product URL here..."
+                            value={urlInput}
+                            onChange={(e) => setUrlInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && urlInput.trim() && !isScanning) {
+                                e.preventDefault()
+                                handleUrlScan()
+                              }
+                            }}
+                            onFocus={(e) => e.stopPropagation()}
+                            onClick={(e) => e.stopPropagation()}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-sm bg-white outline-none"
+                            disabled={isScanning}
+                            autoComplete="url"
+                            spellCheck={false}
+                          />
+                        </div>
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleUrlScan()
                           }}
                           disabled={isScanning || !urlInput.trim()}
-                          className="btn-primary w-full"
+                          className="btn-primary w-full flex items-center justify-center space-x-2"
                         >
-                          {isScanning ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Scan URL'}
+                          {isScanning ? (
+                            <>
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <span>Scanning...</span>
+                            </>
+                          ) : (
+                            <>
+                              <LinkIcon className="w-4 h-4" />
+                              <span>Scan URL</span>
+                            </>
+                          )}
                         </button>
                       </div>
                     )}

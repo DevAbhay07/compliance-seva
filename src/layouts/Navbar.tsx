@@ -15,8 +15,9 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm h-16">
-      <div className="bg-purple-600 text-white px-4 py-1 text-xs h-6 flex items-center">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+      {/* Government of India Banner - Exactly 24px (h-6) */}
+      <div className="bg-purple-600 text-white px-4 text-xs h-6 flex items-center">
         <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
           <div className="flex items-center space-x-2">
             <div className="w-4 h-3 bg-gradient-to-b from-orange-500 via-white to-green-500 rounded-sm"></div>
@@ -33,7 +34,8 @@ const Navbar: React.FC<NavbarProps> = ({ onToggleSidebar }) => {
         </div>
       </div>
       
-      <div className="px-3 sm:px-4 h-10 flex items-center">
+      {/* Main Navigation - Exactly 40px (h-10) - Total: 64px (h-16) */}
+      <div className="px-3 sm:px-4 h-10 flex items-center border-0 m-0">
         <div className="flex items-center justify-between w-full max-w-7xl mx-auto">
           <div className="flex items-center space-x-2 sm:space-x-4">
             <button
